@@ -1,0 +1,274 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Access | Student Management System</title>
+
+    <style>
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: grid;
+            place-items: center;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background: #f1f5f9;
+            color: #1e293b;
+        }
+
+        .card {
+            width: min(430px, 100%);
+            padding: 35px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 8px 30px #00000012;
+        }
+
+        .icon {
+            text-align: center;
+            font-size: 42px;
+        }
+
+        h1 { text-align: center; margin-bottom: 8px; }
+
+        .subtitle {
+            text-align: center;
+            color: #64748b;
+        }
+
+        label {
+            display: block;
+            margin: 18px 0 7px;
+            font-weight: bold;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 7px;
+            font-size: 15px;
+        }
+
+        button {
+            width: 100%;
+            padding: 13px;
+            margin-top: 20px;
+            border: none;
+            border-radius: 7px;
+            background: #2563eb;
+            color: white;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        button:disabled { opacity: .6; }
+
+        .secondary {
+            background: white;
+            color: #2563eb;
+            border: 1px solid #2563eb;
+            margin-top: 10px;
+        }
+
+        .link {
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+            color: #2563eb;
+            text-decoration: none;
+        }
+
+        .message {
+            text-align: center;
+            overflow-wrap: anywhere;
+            font-size: 14px;
+        }
+    </style>
+</head>
+
+<body>
+<div class="card">
+    <div class="icon">👨‍💼</div>
+
+    <h1 id="heading">Admin Access</h1>
+
+    <p class="subtitle" id="subtitle">
+        Log in to your existing account or create a new one.
+    </p>
+
+    <form id="accessForm" autocomplete="off">
+        <label for="email">Email</label>
+        <input
+            id="email"
+            name="admin-access-email"
+            type="email"
+            autocomplete="off"
+            placeholder="Enter your email"
+            required
+        >
+
+        <label for="password">Password</label>
+        <input
+            id="password"
+            name="admin-access-password"
+            type="password"
+            autocomplete="new-password"
+            placeholder="Enter your password"
+            required
+        >
+
+        <button id="submitButton" type="submit">Admin Login</button>
+
+        <button id="switchButton" class="secondary" type="button">
+            New user? Create an account
+        </button>
+    </form>
+
+    <p id="message" class="message" role="status"></p>
+
+    <a class="link" href="/index.html">Back to Welcome Page</a>
+</div>
+
+<script>
+    let signupMode = false;
+
+    const form = document.getElementById("accessForm");
+    const heading = document.getElementById("heading");
+    const subtitle = document.getElementById("subtitle");
+    const emailInput = document.getElementById("email");
+    const password = document.getElementById("password");
+    const submitButton = document.getElementById("submitButton");
+    const switchButton = document.getElementById("switchButton");
+    const message = document.getElementById("message");
+
+    // Clear the fields when this page is displayed.
+    window.addEventListener("pageshow", () => {
+        if (!signupMode) {
+            emailInput.value = "";
+            password.value = "";
+        }
+    });
+
+    switchButton.addEventListener("click", () => {
+        signupMode = !signupMode;
+        form.reset();
+        message.textContent = "";
+
+        heading.textContent = signupMode
+            ? "Admin Sign Up"
+            : "Admin Access";
+
+        subtitle.textContent = signupMode
+            ? "Create your administrator account."
+            : "Log in to your existing administrator account.";
+
+        submitButton.textContent = signupMode
+            ? "Create Admin Account"
+            : "Admin Login";
+
+        switchButton.textContent = signupMode
+            ? "Already registered? Log in"
+            : "New user? Create an account";
+
+        password.autocomplete = signupMode
+            ? "new-password"
+            : "current-password";
+
+        password.minLength = signupMode ? 8 : 1;
+    });
+
+    form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+
+        message.textContent = "";
+        submitButton.disabled = true;
+
+        const email = emailInput.value.trim().toLowerCase();
+        const enteredPassword = password.value;
+
+        try {
+            const response = await fetch(
+                signupMode
+                    ? "/api/auth/register/admin"
+                    : "/api/auth/login",
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    credentials: "same-origin",
+                    body: JSON.stringify({
+                        email: email,
+                        password: enteredPassword
+                    })
+                }
+            );
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.message || "Request failed.");
+            }
+
+            if (signupMode) {
+                message.style.color = "green";
+                message.textContent =
+                    "Account created successfully! Please log in.";
+
+                signupMode = false;
+                heading.textContent = "Admin Access";
+                subtitle.textContent =
+                    "Log in to your existing administrator account.";
+                submitButton.textContent = "Admin Login";
+                switchButton.textContent =
+                    "New user? Create an account";
+
+                form.reset();
+                password.minLength = 1;
+                password.autocomplete = "current-password";
+                return;
+            }
+
+            if (data.role !== "ADMIN") {
+                await fetch("/api/auth/logout", {
+                    method: "POST",
+                    credentials: "same-origin"
+                });
+
+                throw new Error("This account is not an admin account.");
+            }
+
+            // Successful admin login opens the dashboard.
+            window.location.replace("/admin-dashboard.html");
+
+        } catch (error) {
+            message.style.color = "#dc2626";
+            message.textContent =
+                error.message || "Could not connect to the server.";
+        } finally {
+            submitButton.disabled = false;
+        }
+    });
+
+    // Refreshing this page returns to the Welcome page.
+    const navigation = performance.getEntriesByType("navigation")[0];
+
+    if (navigation && navigation.type === "reload") {
+        window.location.replace("/index.html");
+    }
+
+    // Attempt to resist Back/Forward navigation.
+    history.pushState({ page: "admin-access" }, "", location.href);
+
+    window.addEventListener("popstate", () => {
+        history.pushState({ page: "admin-access" }, "", location.href);
+    });
+</script>
+</body>
+</html>

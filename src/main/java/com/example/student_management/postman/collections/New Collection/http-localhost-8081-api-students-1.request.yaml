@@ -1,0 +1,21 @@
+$kind: http-request
+name: http://localhost:8081/api/students
+description: ""
+url: http://localhost:8081/api/students
+method: GET
+body:
+  type: json
+  content: "{\r
+
+    \  \"name\": \"Ankitha H\",\r
+
+    \  \"email\": \"ankitha@example.com\",\r
+
+    \  \"phone\": \"9876543210\",\r
+
+    \  \"course\": \"Computer Science\",\r
+
+    \  \"address\": \"Bangalore\"\r
+
+    }"
+order: 1791275125187

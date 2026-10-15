@@ -1,0 +1,292 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f1f5f9;
+            color: #1e293b;
+        }
+
+        header {
+            background: #1e3a8a;
+            color: white;
+            padding: 22px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 23px;
+        }
+
+        button {
+            padding: 10px 15px;
+            border: 0;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .logout {
+            background: #dc2626;
+            color: white;
+        }
+
+        .logout:hover {
+            background: #b91c1c;
+        }
+
+        main {
+            max-width: 1000px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        .card {
+            background: white;
+            padding: 24px;
+            margin-bottom: 22px;
+            border-radius: 10px;
+            box-shadow: 0 3px 12px #0000000d;
+        }
+
+        .card h2 {
+            margin-top: 0;
+            margin-bottom: 20px;
+        }
+
+        #profile p {
+            line-height: 1.7;
+            overflow-wrap: anywhere;
+        }
+
+        .results {
+            padding: 14px;
+            margin: 10px 0;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 7px;
+        }
+
+        .results p {
+            margin: 5px 0;
+        }
+
+        .muted {
+            color: #64748b;
+        }
+
+        @media (max-width: 600px) {
+            header {
+                padding: 18px;
+            }
+
+            header h1 {
+                font-size: 20px;
+            }
+
+            main {
+                padding: 0 12px;
+                margin-top: 20px;
+            }
+
+            .card {
+                padding: 18px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>Student Dashboard</h1>
+        <button class="logout" id="logoutButton" type="button">
+            Logout
+        </button>
+    </header>
+
+    <main>
+        <section class="card">
+            <h2>My Profile</h2>
+            <div id="profile">Loading profile...</div>
+        </section>
+
+        <section class="card">
+            <h2>My Academic Results</h2>
+            <div id="results">Loading marks...</div>
+        </section>
+    </main>
+
+    <script>
+        // If this page is refreshed, return to the Welcome page.
+        const navigationEntry =
+            performance.getEntriesByType("navigation")[0];
+
+        if (navigationEntry && navigationEntry.type === "reload") {
+            window.location.replace("/index.html");
+        }
+
+        // Attempt to resist browser Back navigation.
+        // Browsers do not allow websites to completely disable Back/Forward.
+        history.pushState(
+            { page: "student-dashboard" },
+            "",
+            window.location.href
+        );
+
+        window.addEventListener("popstate", function () {
+            history.pushState(
+                { page: "student-dashboard" },
+                "",
+                window.location.href
+            );
+        });
+
+        const studentId = sessionStorage.getItem("studentId");
+
+        const profileElement = document.getElementById("profile");
+        const resultsElement = document.getElementById("results");
+        const logoutButton = document.getElementById("logoutButton");
+
+        // Load the student profile and academic results.
+        async function loadDashboard() {
+            if (!studentId) {
+                window.location.replace("/student-login.html");
+                return;
+            }
+
+            try {
+                const [studentResponse, marksResponse] = await Promise.all([
+                    fetch(
+                        "/api/students/" + encodeURIComponent(studentId),
+                        { credentials: "same-origin" }
+                    ),
+                    fetch("/api/marks", {
+                        credentials: "same-origin"
+                    })
+                ]);
+
+                if (
+                    studentResponse.status === 401 ||
+                    studentResponse.status === 403 ||
+                    marksResponse.status === 401 ||
+                    marksResponse.status === 403
+                ) {
+                    sessionStorage.removeItem("studentId");
+                    window.location.replace("/student-login.html");
+                    return;
+                }
+
+                if (!studentResponse.ok || !marksResponse.ok) {
+                    throw new Error(
+                        "Failed to load student information."
+                    );
+                }
+
+                const student = await studentResponse.json();
+                const marks = await marksResponse.json();
+
+                // Display the student profile safely.
+                profileElement.replaceChildren();
+
+                const profileFields = [
+                    ["Name", student.name],
+                    ["Email", student.email],
+                    ["Phone", student.phone],
+                    ["Course", student.course],
+                    ["Address", student.address]
+                ];
+
+                profileFields.forEach(function ([label, value]) {
+                    const paragraph = document.createElement("p");
+                    const strong = document.createElement("strong");
+
+                    strong.textContent = label + ": ";
+
+                    paragraph.append(
+                        strong,
+                        document.createTextNode(value ?? "")
+                    );
+
+                    profileElement.appendChild(paragraph);
+                });
+
+                // Show only marks belonging to this student.
+                const myMarks = marks.filter(function (mark) {
+                    return String(mark.studentId) === String(studentId);
+                });
+
+                resultsElement.replaceChildren();
+
+                if (myMarks.length === 0) {
+                    resultsElement.textContent =
+                        "No marks have been added yet.";
+                    return;
+                }
+
+                myMarks.forEach(function (mark) {
+                    const item = document.createElement("div");
+                    item.className = "results";
+
+                    const subject = document.createElement("p");
+                    subject.textContent =
+                        "Subject: " + (mark.subject ?? "");
+
+                    const score = document.createElement("p");
+                    score.textContent =
+                        "Marks: " + (mark.marks ?? "");
+
+                    item.append(subject, score);
+                    resultsElement.appendChild(item);
+                });
+
+            } catch (error) {
+                console.error("Dashboard loading error:", error);
+
+                profileElement.textContent =
+                    "Unable to load profile. Please check the backend.";
+
+                resultsElement.textContent =
+                    "Unable to load academic results.";
+            }
+        }
+
+        // Log out and clear the browser and server session.
+        async function logout() {
+            logoutButton.disabled = true;
+            logoutButton.textContent = "Logging out...";
+
+            sessionStorage.removeItem("studentId");
+
+            try {
+                await fetch("/api/auth/logout", {
+                    method: "POST",
+                    credentials: "same-origin"
+                });
+            } catch (error) {
+                console.error("Logout request failed:", error);
+            } finally {
+                // Return to the Welcome page after logout.
+                window.location.replace("/index.html");
+            }
+        }
+
+        logoutButton.addEventListener("click", logout);
+
+        loadDashboard();
+    </script>
+</body>
+</html>

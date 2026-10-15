@@ -1,0 +1,237 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login</title>
+
+    <link rel="stylesheet" href="style.css">
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f4f7fb;
+            color: #1f2937;
+        }
+
+        .login-page {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .login-box {
+            width: 100%;
+            max-width: 420px;
+            background: white;
+            padding: 40px;
+            border-radius: 14px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .login-icon {
+            width: 70px;
+            height: 70px;
+            margin: 0 auto 20px;
+            border-radius: 50%;
+            background: #dbeafe;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 32px;
+        }
+
+        .login-box h1 {
+            text-align: center;
+            margin-bottom: 8px;
+        }
+
+        .login-box .subtitle {
+            text-align: center;
+            color: #6b7280;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 7px;
+            font-weight: bold;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 7px;
+            font-size: 15px;
+            box-sizing: border-box;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #2563eb;
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 13px;
+            border: none;
+            border-radius: 7px;
+            background: #2563eb;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .login-btn:hover { background: #1d4ed8; }
+
+        .login-btn:disabled {
+            opacity: 0.65;
+            cursor: not-allowed;
+        }
+
+        .back-btn {
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+            color: #2563eb;
+            text-decoration: none;
+        }
+
+        .back-btn:hover { text-decoration: underline; }
+
+        .error-message {
+            color: #dc2626;
+            text-align: center;
+            margin-top: 15px;
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+<div class="login-page">
+    <div class="login-box">
+        <div class="login-icon">👨‍💼</div>
+
+        <h1>Admin Login</h1>
+        <p class="subtitle">Login to access the admin dashboard</p>
+
+        <form id="adminLoginForm" autocomplete="off">
+            <div class="form-group">
+                <label for="username">Email</label>
+                <input
+                    type="email"
+                    id="username"
+                    name="admin-login-email"
+                    placeholder="Enter email"
+                    autocomplete="off"
+                    required>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input
+                    type="password"
+                    id="password"
+                    name="admin-login-password"
+                    placeholder="Enter password"
+                    autocomplete="new-password"
+                    required>
+            </div>
+
+            <button type="submit" class="login-btn" id="loginButton">
+                Login
+            </button>
+
+            <p id="errorMessage" class="error-message" role="alert"></p>
+        </form>
+
+        <a href="/index.html" class="back-btn">
+            ← Back to Login Selection
+        </a>
+    </div>
+</div>
+
+<script>
+    const form = document.getElementById("adminLoginForm");
+    const errorMessage = document.getElementById("errorMessage");
+    const loginButton = document.getElementById("loginButton");
+
+    // Return to Welcome when this page is refreshed.
+    const navigationEntry = performance.getEntriesByType("navigation")[0];
+
+    if (navigationEntry && navigationEntry.type === "reload") {
+        window.location.replace("/index.html");
+    }
+
+    // Attempt to resist Back/Forward navigation.
+    // Browsers do not allow websites to completely disable these controls.
+    history.pushState({ page: "admin-login" }, "", location.href);
+
+    window.addEventListener("popstate", function () {
+        history.pushState({ page: "admin-login" }, "", location.href);
+    });
+
+    form.addEventListener("submit", async function(event) {
+        event.preventDefault();
+
+        const email = document.getElementById("username")
+            .value.trim().toLowerCase();
+
+        const password = document.getElementById("password").value;
+
+        errorMessage.style.display = "none";
+        loginButton.disabled = true;
+        loginButton.textContent = "Logging in...";
+
+        try {
+            const response = await fetch("/api/auth/login", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                credentials: "same-origin",
+                body: JSON.stringify({ email, password })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.message || "Login failed.");
+            }
+
+            if (data.role !== "ADMIN") {
+                // End the session if this is not an admin account.
+                await fetch("/api/auth/logout", {
+                    method: "POST",
+                    credentials: "same-origin"
+                });
+
+                throw new Error("This account is not an admin account.");
+            }
+
+            // Successful login opens the Admin Dashboard.
+            window.location.replace("/admin-dashboard.html");
+
+        } catch (error) {
+            errorMessage.textContent =
+                error.message || "Unable to connect to the server.";
+            errorMessage.style.display = "block";
+        } finally {
+            loginButton.disabled = false;
+            loginButton.textContent = "Login";
+        }
+    });
+</script>
+</body>
+</html>

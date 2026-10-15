@@ -1,0 +1,390 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Registration | EduManage</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: "Segoe UI", Arial, sans-serif;
+            background: #f6f8ff;
+            color: #172554;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 18px 7%;
+            background: white;
+            border-bottom: 1px solid #e8ecf5;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: #172554;
+            font-size: 21px;
+            font-weight: 750;
+            text-decoration: none;
+        }
+
+        .brand-icon {
+            width: 43px;
+            height: 43px;
+            display: grid;
+            place-items: center;
+            border-radius: 13px;
+            background: #3157d5;
+            color: white;
+            font-size: 23px;
+        }
+
+        .nav-tag {
+            color: #64748b;
+            font-size: 14px;
+        }
+
+        main {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 35px 20px;
+        }
+
+        .signup-box {
+            width: 100%;
+            max-width: 440px;
+            padding: 35px;
+            background: white;
+            border: 1px solid #e7ebf5;
+            border-radius: 18px;
+            box-shadow: 0 15px 40px #1e293b0d;
+        }
+
+        .student-icon {
+            width: 60px;
+            height: 60px;
+            display: grid;
+            place-items: center;
+            margin: 0 auto 18px;
+            border-radius: 17px;
+            background: #dcfce7;
+            font-size: 30px;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 27px;
+            margin: 0 0 10px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #64748b;
+            font-size: 14px;
+            line-height: 1.7;
+            margin: 0 0 25px;
+        }
+
+        label {
+            display: block;
+            margin: 18px 0 7px;
+            font-size: 14px;
+            font-weight: 650;
+        }
+
+        input {
+            width: 100%;
+            padding: 13px;
+            border: 1px solid #d1d9e8;
+            border-radius: 8px;
+            font-size: 15px;
+            outline: none;
+            background: white;
+        }
+
+        input:focus {
+            border-color: #3157d5;
+            box-shadow: 0 0 0 3px #3157d51a;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            margin-top: 25px;
+            border: none;
+            border-radius: 9px;
+            background: #3157d5;
+            color: white;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.2s ease;
+        }
+
+        button:hover {
+            background: #203eaa;
+        }
+
+        button:disabled {
+            opacity: 0.65;
+            cursor: not-allowed;
+        }
+
+        #message {
+            text-align: center;
+            font-size: 14px;
+            line-height: 1.6;
+            margin: 15px 0 0;
+            overflow-wrap: anywhere;
+        }
+
+        .login-link {
+            text-align: center;
+            font-size: 14px;
+            color: #64748b;
+            margin: 22px 0 0;
+        }
+
+        .login-link a,
+        .back-link {
+            color: #3157d5;
+            font-weight: 650;
+            text-decoration: none;
+        }
+
+        .login-link a:hover,
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        .back-link {
+            display: block;
+            text-align: center;
+            margin-top: 18px;
+            font-size: 14px;
+        }
+
+        footer {
+            padding: 20px;
+            text-align: center;
+            color: #64748b;
+            background: white;
+            border-top: 1px solid #e8ecf5;
+            font-size: 13px;
+        }
+
+        @media (max-width: 480px) {
+            .navbar {
+                padding: 14px 5%;
+            }
+
+            .brand {
+                font-size: 18px;
+            }
+
+            .nav-tag {
+                display: none;
+            }
+
+            .signup-box {
+                padding: 25px 20px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar">
+        <a href="/index.html" class="brand">
+            <div class="brand-icon">E</div>
+            <span>EduManage</span>
+        </a>
+
+        <span class="nav-tag">Student Registration</span>
+    </nav>
+
+    <main>
+        <div class="signup-box">
+            <div class="student-icon">🎓</div>
+
+            <h1>Create Student Account</h1>
+
+            <p class="subtitle">
+                Register to access your student profile,
+                course information and academic results.
+            </p>
+
+            <form id="signupForm" autocomplete="off">
+                <label for="email">Registered Student Email</label>
+
+                <input
+                    type="email"
+                    id="email"
+                    name="student-registration-email"
+                    placeholder="Enter the email registered by your admin"
+                    autocomplete="off"
+                    required>
+
+                <label for="password">Password</label>
+
+                <input
+                    type="password"
+                    id="password"
+                    name="student-registration-password"
+                    placeholder="Create a password (minimum 8 characters)"
+                    minlength="8"
+                    autocomplete="new-password"
+                    required>
+
+                <label for="confirmPassword">Confirm Password</label>
+
+                <input
+                    type="password"
+                    id="confirmPassword"
+                    name="student-confirm-password"
+                    placeholder="Enter your password again"
+                    minlength="8"
+                    autocomplete="new-password"
+                    required>
+
+                <button type="submit" id="signupButton">
+                    Create Student Account
+                </button>
+            </form>
+
+            <p id="message" role="status" aria-live="polite"></p>
+
+            <p class="login-link">
+                Already have an account?
+                <a href="/student-login.html">Student Login</a>
+            </p>
+
+            <a class="back-link" href="/index.html">
+                ← Back to Welcome Page
+            </a>
+        </div>
+    </main>
+
+    <footer>
+        © 2026 EduManage · Student Management System
+    </footer>
+
+    <script>
+        const form = document.getElementById("signupForm");
+        const message = document.getElementById("message");
+        const button = document.getElementById("signupButton");
+
+        form.addEventListener("submit", async function(event) {
+            event.preventDefault();
+
+            const email = document.getElementById("email")
+                .value.trim().toLowerCase();
+
+            const password =
+                document.getElementById("password").value;
+
+            const confirmPassword =
+                document.getElementById("confirmPassword").value;
+
+            message.textContent = "";
+            message.style.color = "#dc2626";
+
+            if (password.length < 8) {
+                message.textContent =
+                    "Password must contain at least 8 characters.";
+                return;
+            }
+
+            if (password !== confirmPassword) {
+                message.textContent =
+                    "Passwords do not match. Please try again.";
+                document.getElementById("confirmPassword").focus();
+                return;
+            }
+
+            button.disabled = true;
+            button.textContent = "Creating account...";
+
+            try {
+                const response = await fetch(
+                    "/api/auth/register/student",
+                    {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "Accept": "application/json"
+                        },
+                        credentials: "same-origin",
+                        body: JSON.stringify({
+                            email: email,
+                            password: password
+                        })
+                    }
+                );
+
+                const responseText = await response.text();
+                let data = {};
+
+                if (responseText) {
+                    try {
+                        data = JSON.parse(responseText);
+                    } catch {
+                        data = { message: responseText };
+                    }
+                }
+
+                if (!response.ok) {
+                    throw new Error(
+                        data.message ||
+                        data.error ||
+                        (response.status === 401
+                            ? "Registration was unauthorized. Check your Spring Security configuration."
+                            : response.status === 403
+                                ? "Registration was forbidden. Check your security settings."
+                                : "Registration failed. Make sure your email is already registered by the administrator.")
+                    );
+                }
+
+                message.style.color = "#15803d";
+                message.textContent =
+                    "Student account created successfully! Redirecting to login...";
+
+                form.reset();
+                button.textContent = "Account Created";
+
+                setTimeout(function() {
+                    window.location.replace("/student-login.html");
+                }, 1200);
+
+            } catch (error) {
+                message.style.color = "#dc2626";
+                message.textContent =
+                    error.message ||
+                    "Unable to connect to the server. Please try again.";
+
+                button.disabled = false;
+                button.textContent = "Create Student Account";
+            }
+        });
+    </script>
+</body>
+</html>
+```

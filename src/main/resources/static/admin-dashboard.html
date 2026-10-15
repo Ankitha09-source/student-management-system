@@ -1,0 +1,818 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+
+    <style>
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f4f7fb;
+            color: #1f2937;
+        }
+
+        header {
+            background: #1e3a8a;
+            color: white;
+            padding: 18px 35px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        header h1 { margin: 0; font-size: 24px; }
+        header span { font-size: 14px; }
+
+        .logout-btn {
+            background: #dc2626;
+            color: white;
+            border: none;
+            padding: 9px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .layout {
+            display: flex;
+            min-height: calc(100vh - 70px);
+        }
+
+        .sidebar {
+            width: 230px;
+            flex-shrink: 0;
+            background: #111827;
+            padding-top: 25px;
+        }
+
+        .sidebar button {
+            width: 100%;
+            padding: 15px 20px;
+            border: none;
+            background: transparent;
+            color: #d1d5db;
+            text-align: left;
+            font-size: 15px;
+            cursor: pointer;
+        }
+
+        .sidebar button:hover {
+            background: #1f2937;
+            color: white;
+        }
+
+        .sidebar button.active {
+            background: #2563eb;
+            color: white;
+        }
+
+        .content {
+            flex: 1;
+            min-width: 0;
+            padding: 30px;
+        }
+
+        .page { display: none; }
+        .page.active { display: block; }
+        .page h2 { margin-top: 0; }
+
+        .dashboard-cards {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .dashboard-card {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+            width: 220px;
+        }
+
+        .dashboard-card h3 { margin-top: 0; }
+
+        .dashboard-card p {
+            font-size: 28px;
+            font-weight: bold;
+            color: #2563eb;
+        }
+
+        .form-card, .list-container {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+            margin-bottom: 25px;
+        }
+
+        .form-card input, .form-card select,
+        .edit-form input, .edit-form select {
+            padding: 11px;
+            margin: 5px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .primary-btn, .cancel-btn, .edit-btn, .delete-btn {
+            color: white;
+            border: none;
+            padding: 10px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 5px 2px;
+        }
+
+        .primary-btn { background: #2563eb; }
+        .primary-btn:hover { background: #1d4ed8; }
+        .cancel-btn { background: #6b7280; }
+        .edit-btn { background: #f59e0b; }
+        .delete-btn { background: #dc2626; }
+
+        .item {
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            padding: 15px;
+            border-radius: 7px;
+            margin-bottom: 10px;
+            overflow-wrap: anywhere;
+        }
+
+        .item strong { color: #111827; }
+
+        .edit-form {
+            display: none;
+            background: #eff6ff;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .status-message {
+            padding: 10px;
+            border-radius: 6px;
+            margin: 10px 0;
+        }
+
+        @media (max-width: 800px) {
+            .layout { flex-direction: column; }
+            .sidebar {
+                width: 100%;
+                display: flex;
+                padding: 0;
+            }
+            .sidebar button {
+                text-align: center;
+                padding: 12px 5px;
+            }
+            .content { padding: 18px; }
+            .dashboard-card { width: 100%; }
+            header { padding: 16px; gap: 10px; }
+            header h1 { font-size: 20px; }
+            .form-card input,
+            .form-card select {
+                width: 100%;
+                margin: 5px 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<header>
+    <div>
+        <h1>Admin Dashboard</h1>
+        <span>Student Management System</span>
+    </div>
+    <button class="logout-btn" onclick="logout()">Logout</button>
+</header>
+
+<div class="layout">
+    <aside class="sidebar">
+        <button class="active" onclick="showPage('dashboard', this)">📊 Dashboard</button>
+        <button onclick="showPage('students', this)">👨‍🎓 Students</button>
+        <button onclick="showPage('courses', this)">📚 Courses</button>
+        <button onclick="showPage('marks', this)">📝 Marks</button>
+    </aside>
+
+    <main class="content">
+
+        <section id="dashboard" class="page active">
+            <h2>Dashboard</h2>
+            <p>Welcome to the Admin Dashboard.</p>
+
+            <div class="dashboard-cards">
+                <div class="dashboard-card">
+                    <h3>Students</h3>
+                    <p id="studentCount">0</p>
+                    <span>Total Students</span>
+                </div>
+
+                <div class="dashboard-card">
+                    <h3>Courses</h3>
+                    <p id="courseCount">0</p>
+                    <span>Total Courses</span>
+                </div>
+
+                <div class="dashboard-card">
+                    <h3>Marks</h3>
+                    <p id="marksCount">0</p>
+                    <span>Total Records</span>
+                </div>
+            </div>
+        </section>
+
+        <section id="students" class="page">
+            <h2>Student Management</h2>
+
+            <div class="form-card">
+                <h3>Add Student</h3>
+                <form onsubmit="addStudent(event)">
+                    <input type="text" id="studentName" placeholder="Student Name" required>
+                    <input type="email" id="studentEmail" placeholder="Email" required>
+                    <input type="text" id="studentPhone" placeholder="Phone" required>
+                    <input type="text" id="studentCourse" placeholder="Course" required>
+                    <input type="text" id="studentAddress" placeholder="Address" required>
+                    <button class="primary-btn" type="submit">Add Student</button>
+                </form>
+            </div>
+
+            <div id="studentEditForm" class="edit-form">
+                <h3>Edit Student</h3>
+                <input type="hidden" id="editStudentId">
+                <input type="text" id="editStudentName" placeholder="Name">
+                <input type="email" id="editStudentEmail" placeholder="Email">
+                <input type="text" id="editStudentPhone" placeholder="Phone">
+                <input type="text" id="editStudentCourse" placeholder="Course">
+                <input type="text" id="editStudentAddress" placeholder="Address">
+                <br>
+                <button class="primary-btn" onclick="updateStudent()">Save Changes</button>
+                <button class="cancel-btn" onclick="cancelStudentEdit()">Cancel</button>
+            </div>
+
+            <div class="list-container">
+                <h3>Students</h3>
+                <div id="studentList"></div>
+            </div>
+        </section>
+
+        <section id="courses" class="page">
+            <h2>Course Management</h2>
+
+            <div class="form-card">
+                <h3>Add Course</h3>
+                <form onsubmit="addCourse(event)">
+                    <input type="text" id="courseName" placeholder="Course Name" required>
+                    <input type="text" id="courseDuration" placeholder="Duration" required>
+                    <button class="primary-btn" type="submit">Add Course</button>
+                </form>
+            </div>
+
+            <div id="courseEditForm" class="edit-form">
+                <h3>Edit Course</h3>
+                <input type="hidden" id="editCourseId">
+                <input type="text" id="editCourseName" placeholder="Course Name">
+                <input type="text" id="editCourseDuration" placeholder="Duration">
+                <br>
+                <button class="primary-btn" onclick="updateCourse()">Save Changes</button>
+                <button class="cancel-btn" onclick="cancelCourseEdit()">Cancel</button>
+            </div>
+
+            <div class="list-container">
+                <h3>Courses</h3>
+                <div id="courseList"></div>
+            </div>
+        </section>
+
+        <section id="marks" class="page">
+            <h2>Marks Management</h2>
+
+            <div class="form-card">
+                <h3>Add Marks</h3>
+                <form onsubmit="addMarks(event)">
+                    <select id="marksStudentId" required>
+                        <option value="">Select Student</option>
+                    </select>
+                    <input type="text" id="marksSubject" placeholder="Subject" required>
+                    <input type="number" id="marksValue" placeholder="Marks" min="0" max="100" required>
+                    <button class="primary-btn" type="submit">Add Marks</button>
+                </form>
+            </div>
+
+            <div id="marksEditForm" class="edit-form">
+                <h3>Edit Marks</h3>
+                <input type="hidden" id="editMarksId">
+                <select id="editMarksStudentId">
+                    <option value="">Select Student</option>
+                </select>
+                <input type="text" id="editMarksSubject" placeholder="Subject">
+                <input type="number" id="editMarksValue" placeholder="Marks" min="0" max="100">
+                <br>
+                <button class="primary-btn" onclick="updateMarks()">Save Changes</button>
+                <button class="cancel-btn" onclick="cancelMarksEdit()">Cancel</button>
+            </div>
+
+            <div class="list-container">
+                <h3>Marks</h3>
+                <div id="marksList"></div>
+            </div>
+        </section>
+
+    </main>
+</div>
+
+<script>
+    // Refreshing the dashboard returns to the Welcome page.
+    // Do not add this same refresh redirect more than once.
+    const navigationEntry = performance.getEntriesByType("navigation")[0];
+
+    if (navigationEntry && navigationEntry.type === "reload") {
+        window.location.replace("/index.html");
+    }
+
+    // Attempt to resist Back/Forward navigation.
+    // Browsers do not allow websites to completely disable these buttons.
+    history.pushState({ page: "admin-dashboard" }, "", location.href);
+
+    window.addEventListener("popstate", function () {
+        history.pushState({ page: "admin-dashboard" }, "", location.href);
+    });
+
+    // Show one dashboard section at a time
+    function showPage(pageId, button) {
+        document.querySelectorAll(".page").forEach(page =>
+            page.classList.remove("active")
+        );
+
+        document.getElementById(pageId).classList.add("active");
+
+        document.querySelectorAll(".sidebar button").forEach(btn =>
+            btn.classList.remove("active")
+        );
+
+        button.classList.add("active");
+
+        if (pageId === "students") loadStudents();
+        if (pageId === "courses") loadCourses();
+
+        if (pageId === "marks") {
+            loadMarks();
+            loadStudentsForMarks();
+        }
+    }
+
+    // Logout: clear the server session and return to Admin Access.
+    async function logout() {
+        try {
+            await fetch("/api/auth/logout", {
+                method: "POST",
+                credentials: "same-origin"
+            });
+        } catch (error) {
+            console.error("Logout request failed:", error);
+        } finally {
+            window.location.replace("/admin-access.html");
+        }
+    }
+
+    async function api(url, options = {}) {
+        const response = await fetch(url, {
+            credentials: "same-origin",
+            ...options
+        });
+
+        if (response.status === 401 || response.status === 403) {
+            window.location.replace("/admin-access.html");
+            throw new Error("Your session expired or access was denied.");
+        }
+
+        if (!response.ok) {
+            const message = await response.text();
+            throw new Error(message || "Request failed.");
+        }
+
+        return response;
+    }
+
+    function showError(error) {
+        console.error(error);
+        alert(error.message || "Something went wrong. Please try again.");
+    }
+
+    // STUDENTS
+    async function addStudent(event) {
+        event.preventDefault();
+
+        const student = {
+            name: document.getElementById("studentName").value.trim(),
+            email: document.getElementById("studentEmail").value.trim(),
+            phone: document.getElementById("studentPhone").value.trim(),
+            course: document.getElementById("studentCourse").value.trim(),
+            address: document.getElementById("studentAddress").value.trim()
+        };
+
+        try {
+            await api("/api/students", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(student)
+            });
+
+            alert("Student added successfully!");
+            document.querySelector("#students form").reset();
+            await loadStudents();
+            await loadStudentCount();
+        } catch (error) {
+            showError(error);
+        }
+    }
+
+    async function loadStudents() {
+        try {
+            const response = await api("/api/students");
+            const students = await response.json();
+            const list = document.getElementById("studentList");
+
+            list.replaceChildren();
+            document.getElementById("studentCount").textContent = students.length;
+
+            students.forEach(student => {
+                const div = document.createElement("div");
+                div.className = "item";
+
+                const details = document.createElement("div");
+                details.textContent =
+                    `${student.name} | Email: ${student.email} | Phone: ${student.phone} | Course: ${student.course} | Address: ${student.address}`;
+
+                const edit = document.createElement("button");
+                edit.className = "edit-btn";
+                edit.textContent = "Edit";
+                edit.onclick = () => editStudent(student.id);
+
+                const remove = document.createElement("button");
+                remove.className = "delete-btn";
+                remove.textContent = "Delete";
+                remove.onclick = () => deleteStudent(student.id);
+
+                div.append(details, edit, remove);
+                list.appendChild(div);
+            });
+        } catch (error) {
+            showError(error);
+        }
+    }
+
+    async function editStudent(id) {
+        try {
+            const response = await api(`/api/students/${id}`);
+            const student = await response.json();
+
+            document.getElementById("studentEditForm").style.display = "block";
+            document.getElementById("editStudentId").value = student.id;
+            document.getElementById("editStudentName").value = student.name ?? "";
+            document.getElementById("editStudentEmail").value = student.email ?? "";
+            document.getElementById("editStudentPhone").value = student.phone ?? "";
+            document.getElementById("editStudentCourse").value = student.course ?? "";
+            document.getElementById("editStudentAddress").value = student.address ?? "";
+        } catch (error) {
+            showError(error);
+        }
+    }
+
+    async function updateStudent() {
+        const id = document.getElementById("editStudentId").value;
+
+        const student = {
+            name: document.getElementById("editStudentName").value.trim(),
+            email: document.getElementById("editStudentEmail").value.trim(),
+            phone: document.getElementById("editStudentPhone").value.trim(),
+            course: document.getElementById("editStudentCourse").value.trim(),
+            address: document.getElementById("editStudentAddress").value.trim()
+        };
+
+        try {
+            await api(`/api/students/${id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(student)
+            });
+
+            alert("Student updated successfully!");
+            cancelStudentEdit();
+            await loadStudents();
+        } catch (error) {
+            showError(error);
+        }
+    }
+
+    async function deleteStudent(id) {
+        if (!confirm("Are you sure you want to delete this student?")) return;
+
+        try {
+            await api(`/api/students/${id}`, { method: "DELETE" });
+            alert("Student deleted successfully!");
+            await loadStudents();
+            await loadStudentCount();
+        } catch (error) {
+            showError(error);
+        }
+    }
+
+    function cancelStudentEdit() {
+        document.getElementById("studentEditForm").style.display = "none";
+    }
+
+    // COURSES
+    async function addCourse(event) {
+        event.preventDefault();
+
+        const course = {
+            courseName: document.getElementById("courseName").value.trim(),
+            duration: document.getElementById("courseDuration").value.trim()
+        };
+
+        try {
+            await api("/api/courses", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(course)
+            });
+
+            alert("Course added successfully!");
+            document.querySelector("#courses form").reset();
+            await loadCourses();
+            await loadCourseCount();
+        } catch (error) {
+            showError(error);
+        }
+    }
+
+    async function loadCourses() {
+        try {
+            const response = await api("/api/courses");
+            const courses = await response.json();
+            const list = document.getElementById("courseList");
+
+            list.replaceChildren();
+            document.getElementById("courseCount").textContent = courses.length;
+
+            courses.forEach(course => {
+                const div = document.createElement("div");
+                div.className = "item";
+
+                const details = document.createElement("div");
+                details.textContent =
+                    `${course.courseName} | Duration: ${course.duration}`;
+
+                const edit = document.createElement("button");
+                edit.className = "edit-btn";
+                edit.textContent = "Edit";
+                edit.onclick = () => editCourse(course.id);
+
+                const remove = document.createElement("button");
+                remove.className = "delete-btn";
+                remove.textContent = "Delete";
+                remove.onclick = () => deleteCourse(course.id);
+
+                div.append(details, edit, remove);
+                list.appendChild(div);
+            });
+        } catch (error) {
+            showError(error);
+        }
+    }
+
+    async function editCourse(id) {
+        try {
+            const response = await api(`/api/courses/${id}`);
+            const course = await response.json();
+
+            document.getElementById("courseEditForm").style.display = "block";
+            document.getElementById("editCourseId").value = course.id;
+            document.getElementById("editCourseName").value = course.courseName ?? "";
+            document.getElementById("editCourseDuration").value = course.duration ?? "";
+        } catch (error) {
+            showError(error);
+        }
+    }
+
+    async function updateCourse() {
+        const id = document.getElementById("editCourseId").value;
+
+        const course = {
+            courseName: document.getElementById("editCourseName").value.trim(),
+            duration: document.getElementById("editCourseDuration").value.trim()
+        };
+
+        try {
+            await api(`/api/courses/${id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(course)
+            });
+
+            alert("Course updated successfully!");
+            cancelCourseEdit();
+            await loadCourses();
+        } catch (error) {
+            showError(error);
+        }
+    }
+
+    async function deleteCourse(id) {
+        if (!confirm("Are you sure you want to delete this course?")) return;
+
+        try {
+            await api(`/api/courses/${id}`, { method: "DELETE" });
+            alert("Course deleted successfully!");
+            await loadCourses();
+            await loadCourseCount();
+        } catch (error) {
+            showError(error);
+        }
+    }
+
+    function cancelCourseEdit() {
+        document.getElementById("courseEditForm").style.display = "none";
+    }
+
+    // MARKS
+    async function addMarks(event) {
+        event.preventDefault();
+
+        const marks = {
+            studentId: Number(document.getElementById("marksStudentId").value),
+            subject: document.getElementById("marksSubject").value.trim(),
+            marks: Number(document.getElementById("marksValue").value)
+        };
+
+        try {
+            await api("/api/marks", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(marks)
+            });
+
+            alert("Marks added successfully!");
+            document.querySelector("#marks form").reset();
+            await loadMarks();
+            await loadMarksCount();
+        } catch (error) {
+            showError(error);
+        }
+    }
+
+    async function loadStudentsForMarks() {
+        try {
+            const response = await api("/api/students");
+            const students = await response.json();
+
+            ["marksStudentId", "editMarksStudentId"].forEach(id => {
+                const select = document.getElementById(id);
+                select.replaceChildren(new Option("Select Student", ""));
+
+                students.forEach(student => {
+                    select.add(new Option(student.name, student.id));
+                });
+            });
+        } catch (error) {
+            showError(error);
+        }
+    }
+
+    async function loadMarks() {
+        try {
+            const [marksResponse, studentsResponse] = await Promise.all([
+                api("/api/marks"),
+                api("/api/students")
+            ]);
+
+            const marks = await marksResponse.json();
+            const students = await studentsResponse.json();
+            const list = document.getElementById("marksList");
+
+            list.replaceChildren();
+            document.getElementById("marksCount").textContent = marks.length;
+
+            marks.forEach(mark => {
+                const student = students.find(
+                    s => String(s.id) === String(mark.studentId)
+                );
+
+                const div = document.createElement("div");
+                div.className = "item";
+
+                const details = document.createElement("div");
+                details.textContent =
+                    `Student: ${student ? student.name : "Student not found"} | Subject: ${mark.subject} | Marks: ${mark.marks}`;
+
+                const edit = document.createElement("button");
+                edit.className = "edit-btn";
+                edit.textContent = "Edit";
+                edit.onclick = () => editMarks(mark.id);
+
+                const remove = document.createElement("button");
+                remove.className = "delete-btn";
+                remove.textContent = "Delete";
+                remove.onclick = () => deleteMarks(mark.id);
+
+                div.append(details, edit, remove);
+                list.appendChild(div);
+            });
+        } catch (error) {
+            showError(error);
+        }
+    }
+
+    async function editMarks(id) {
+        try {
+            const response = await api(`/api/marks/${id}`);
+            const mark = await response.json();
+
+            document.getElementById("marksEditForm").style.display = "block";
+            document.getElementById("editMarksId").value = mark.id;
+            document.getElementById("editMarksStudentId").value = mark.studentId;
+            document.getElementById("editMarksSubject").value = mark.subject ?? "";
+            document.getElementById("editMarksValue").value = mark.marks;
+        } catch (error) {
+            showError(error);
+        }
+    }
+
+    async function updateMarks() {
+        const id = document.getElementById("editMarksId").value;
+
+        const marks = {
+            studentId: Number(document.getElementById("editMarksStudentId").value),
+            subject: document.getElementById("editMarksSubject").value.trim(),
+            marks: Number(document.getElementById("editMarksValue").value)
+        };
+
+        try {
+            await api(`/api/marks/${id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(marks)
+            });
+
+            alert("Marks updated successfully!");
+            cancelMarksEdit();
+            await loadMarks();
+        } catch (error) {
+            showError(error);
+        }
+    }
+
+    async function deleteMarks(id) {
+        if (!confirm("Are you sure you want to delete these marks?")) return;
+
+        try {
+            await api(`/api/marks/${id}`, { method: "DELETE" });
+            alert("Marks deleted successfully!");
+            await loadMarks();
+            await loadMarksCount();
+        } catch (error) {
+            showError(error);
+        }
+    }
+
+    function cancelMarksEdit() {
+        document.getElementById("marksEditForm").style.display = "none";
+    }
+
+    // DASHBOARD COUNTS
+    async function loadStudentCount() {
+        const response = await api("/api/students");
+        const students = await response.json();
+        document.getElementById("studentCount").textContent = students.length;
+    }
+
+    async function loadCourseCount() {
+        const response = await api("/api/courses");
+        const courses = await response.json();
+        document.getElementById("courseCount").textContent = courses.length;
+    }
+
+    async function loadMarksCount() {
+        const response = await api("/api/marks");
+        const marks = await response.json();
+        document.getElementById("marksCount").textContent = marks.length;
+    }
+
+    // Load the dashboard counts on initial page load.
+    Promise.all([
+        loadStudentCount(),
+        loadCourseCount(),
+        loadMarksCount()
+    ]).catch(showError);
+</script>
+
+</body>
+</html>

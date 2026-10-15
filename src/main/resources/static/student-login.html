@@ -1,0 +1,311 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Login | EduManage</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f1f5f9;
+            display: grid;
+            place-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .login-card {
+            background: white;
+            width: min(420px, 92%);
+            padding: 35px;
+            border-radius: 14px;
+            box-shadow: 0 8px 25px #00000012;
+        }
+
+        h1 {
+            color: #1e3a8a;
+            text-align: center;
+        }
+
+        p {
+            color: #64748b;
+            text-align: center;
+            line-height: 1.6;
+        }
+
+        label {
+            display: block;
+            margin: 18px 0 7px;
+            color: #1e293b;
+            font-weight: 600;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 15px;
+            background: white;
+        }
+
+        input:focus {
+            outline: 2px solid #93c5fd;
+            border-color: #2563eb;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            margin-top: 22px;
+            border: 0;
+            border-radius: 6px;
+            color: white;
+            background: #2563eb;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #1d4ed8;
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        a {
+            display: block;
+            text-align: center;
+            margin-top: 18px;
+            color: #2563eb;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        #message {
+            color: #dc2626;
+            font-size: 14px;
+            overflow-wrap: anywhere;
+        }
+
+        @media (max-width: 480px) {
+            .login-card {
+                padding: 25px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="login-card">
+        <h1>🎓 Student Login</h1>
+
+        <p>
+            Enter your registered email and password to view
+            your academic details.
+        </p>
+
+        <form id="loginForm" autocomplete="off">
+            <label for="email">Registered Email</label>
+
+            <input
+                type="email"
+                id="email"
+                name="student-login-email"
+                placeholder="Enter your student email"
+                autocomplete="off"
+                required>
+
+            <label for="password">Password</label>
+
+            <input
+                type="password"
+                id="password"
+                name="student-login-password"
+                placeholder="Enter your password"
+                autocomplete="new-password"
+                required>
+
+            <button type="submit" id="loginButton">
+                Login
+            </button>
+        </form>
+
+        <p id="message" role="alert" aria-live="polite"></p>
+
+        <a href="/student-register.html">
+            New student? Create an account
+        </a>
+
+        <a href="/index.html">
+            ← Back to home
+        </a>
+    </div>
+
+    <script>
+        const loginForm = document.getElementById("loginForm");
+        const emailInput = document.getElementById("email");
+        const passwordInput = document.getElementById("password");
+        const loginButton = document.getElementById("loginButton");
+        const message = document.getElementById("message");
+
+        // Clear restored form values when the page is displayed.
+        // Browser password managers may still autofill credentials.
+        window.addEventListener("pageshow", function () {
+            loginForm.reset();
+            message.textContent = "";
+        });
+
+        // Return to Welcome when this page is refreshed.
+        const navigationEntry =
+            performance.getEntriesByType("navigation")[0];
+
+        if (navigationEntry && navigationEntry.type === "reload") {
+            window.location.replace("/index.html");
+        }
+
+        // Best-effort Back/Forward workaround.
+        // Browsers do not allow websites to completely disable navigation.
+        history.pushState(
+            { page: "student-login" },
+            "",
+            window.location.href
+        );
+
+        window.addEventListener("popstate", function () {
+            history.pushState(
+                { page: "student-login" },
+                "",
+                window.location.href
+            );
+        });
+
+        async function clearServerSession() {
+            try {
+                await fetch("/api/auth/logout", {
+                    method: "POST",
+                    credentials: "same-origin"
+                });
+            } catch (error) {
+                console.error("Session cleanup failed:", error);
+            }
+        }
+
+        loginForm.addEventListener("submit", async function (event) {
+            event.preventDefault();
+
+            const email = emailInput.value.trim().toLowerCase();
+            const password = passwordInput.value;
+
+            message.textContent = "";
+            loginButton.disabled = true;
+            loginButton.textContent = "Logging in...";
+
+            sessionStorage.removeItem("studentId");
+
+            let loginSucceeded = false;
+
+            try {
+                // Authenticate email and password using Spring Boot.
+                const loginResponse = await fetch("/api/auth/login", {
+                    method: "POST",
+                    credentials: "same-origin",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Accept": "application/json"
+                    },
+                    body: JSON.stringify({
+                        email: email,
+                        password: password
+                    })
+                });
+
+                const loginData = await loginResponse.json();
+
+                if (!loginResponse.ok) {
+                    throw new Error(
+                        loginData.message || "Invalid email or password."
+                    );
+                }
+
+                // Do not allow admin accounts through student login.
+                if (
+                    String(loginData.role).toUpperCase() !== "STUDENT"
+                ) {
+                    await clearServerSession();
+
+                    throw new Error(
+                        "This is not a student account. Please use the appropriate login page."
+                    );
+                }
+
+                loginSucceeded = true;
+
+                // Find the existing student profile for this email.
+                const studentsResponse = await fetch("/api/students", {
+                    method: "GET",
+                    credentials: "same-origin",
+                    headers: {
+                        "Accept": "application/json"
+                    }
+                });
+
+                if (!studentsResponse.ok) {
+                    throw new Error(
+                        "Login succeeded, but student details could not be loaded. Check backend permissions."
+                    );
+                }
+
+                const students = await studentsResponse.json();
+
+                const student = students.find(function (item) {
+                    return item.email &&
+                        item.email.trim().toLowerCase() === email;
+                });
+
+                if (!student || student.id == null) {
+                    throw new Error(
+                        "No matching student profile was found. Please contact the administrator."
+                    );
+                }
+
+                sessionStorage.setItem(
+                    "studentId",
+                    String(student.id)
+                );
+
+                window.location.replace("/student-dashboard.html");
+
+            } catch (error) {
+                console.error("Student login error:", error);
+
+                if (loginSucceeded) {
+                    await clearServerSession();
+                    sessionStorage.removeItem("studentId");
+                }
+
+                message.textContent =
+                    error.message ||
+                    "Unable to connect. Check that Spring Boot is running.";
+
+            } finally {
+                loginButton.disabled = false;
+                loginButton.textContent = "Login";
+            }
+        });
+    </script>
+</body>
+</html>

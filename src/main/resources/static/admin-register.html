@@ -1,0 +1,205 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Sign Up</title>
+
+    <style>
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f4f7fb;
+            color: #1f2937;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .signup-box {
+            width: 100%;
+            max-width: 420px;
+            padding: 35px;
+            background: white;
+            border-radius: 14px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 { text-align: center; margin-bottom: 8px; }
+
+        .subtitle {
+            text-align: center;
+            color: #6b7280;
+        }
+
+        label {
+            display: block;
+            margin: 20px 0 7px;
+            font-weight: bold;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 7px;
+            font-size: 15px;
+        }
+
+        button {
+            width: 100%;
+            padding: 13px;
+            margin-top: 24px;
+            border: none;
+            border-radius: 7px;
+            background: #2563eb;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        button:hover { background: #1d4ed8; }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        #message {
+            text-align: center;
+            margin-top: 15px;
+        }
+
+        .back-link {
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+            color: #2563eb;
+            text-decoration: none;
+        }
+
+        .back-link:hover { text-decoration: underline; }
+    </style>
+</head>
+
+<body>
+    <div class="signup-box">
+        <h1>👨‍💼 Admin Sign Up</h1>
+        <p class="subtitle">Create a new administrator account</p>
+
+        <form id="signupForm" autocomplete="off">
+            <label for="email">Email</label>
+            <input
+                type="email"
+                id="email"
+                name="admin-signup-email"
+                placeholder="Enter your email"
+                autocomplete="off"
+                required>
+
+            <label for="password">Password</label>
+            <input
+                type="password"
+                id="password"
+                name="admin-signup-password"
+                placeholder="At least 8 characters"
+                minlength="8"
+                autocomplete="new-password"
+                required>
+
+            <button type="submit" id="signupButton">
+                Create Account
+            </button>
+        </form>
+
+        <p id="message" role="status" aria-live="polite"></p>
+
+        <a class="back-link" href="/admin-login.html">
+            ← Back to Admin Login
+        </a>
+    </div>
+
+    <script>
+        const form = document.getElementById("signupForm");
+        const message = document.getElementById("message");
+        const button = document.getElementById("signupButton");
+
+        // Return to Welcome when this page is refreshed.
+        const navigationEntry =
+            performance.getEntriesByType("navigation")[0];
+
+        if (navigationEntry && navigationEntry.type === "reload") {
+            window.location.replace("/index.html");
+        }
+
+        // Attempt to resist Back/Forward navigation.
+        // Browsers do not allow websites to completely disable these controls.
+        history.pushState({ page: "admin-register" }, "", location.href);
+
+        window.addEventListener("popstate", function () {
+            history.pushState({ page: "admin-register" }, "", location.href);
+        });
+
+        form.addEventListener("submit", async function(event) {
+            event.preventDefault();
+
+            const email = document.getElementById("email")
+                .value.trim().toLowerCase();
+
+            const password = document.getElementById("password").value;
+
+            message.textContent = "";
+            button.disabled = true;
+            button.textContent = "Creating account...";
+
+            try {
+                const response = await fetch("/api/auth/register/admin", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    credentials: "same-origin",
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(
+                        data.message || "Registration failed."
+                    );
+                }
+
+                message.style.color = "green";
+                message.textContent =
+                    "Account created successfully! Redirecting to login...";
+
+                form.reset();
+
+                button.textContent = "Account Created";
+
+                setTimeout(function() {
+                    window.location.replace("/admin-login.html");
+                }, 1200);
+
+            } catch (error) {
+                message.style.color = "#dc2626";
+                message.textContent =
+                    error.message || "Unable to connect to the server.";
+            } finally {
+                // Keep the button disabled during the success redirect.
+                if (message.style.color !== "green") {
+                    button.disabled = false;
+                    button.textContent = "Create Account";
+                }
+            }
+        });
+    </script>
+</body>
+</html>
